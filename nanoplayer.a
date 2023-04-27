@@ -1,0 +1,35 @@
+
+!src <cbm/c64/vic.a>
+!cpu 6510
+
+
+*= $801
+    !word (+), 2021
+    !text $9e, "2061", 0
++   !word 0
+
+    sei
+    jsr NanoPlayer_Init
+.RasterLoop:    
+    lda #$FF
+-   cmp vic_line
+    bne -
+    inc vic_cborder
+    jsr NanoPlayer_Loop
+    inc vic_cborder
+    
+-   lda vic_line
+    bmi -
+.vMaxLine = *+1
+    cmp #0
+    bcc -
+    sta .vMaxLine
+    ldx vic_cborder : dex : dex : stx vic_cborder
+    jmp .RasterLoop
+
+;; Needs 56 consecutive zeropage addresses
+NanoPlayer_Zeropage = $10
+
+NanoPlayer_Memory = $3D00
+
+!src "nanoplayer_main.a"

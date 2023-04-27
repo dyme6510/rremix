@@ -1,0 +1,399 @@
+;; #################################################
+;; Music definition file for the nanopattern-player.
+;; #################################################
+;;
+;; The patterns are very short fragments that can be combined into other patterns and thus heavily reused.
+;; There is a special "Group"-command that selects one of 4 patterns out of a group randomly.
+;;
+;; The player has 5 instead of 3 voices:
+;;  - Voice 0-2 are the standard SID voices
+;;  - Voice 3 is meant for drums. It overrides any inactive voice (fallback: CFG_DRUMS_DEFAULT_VOICE).
+;;    This allows better reuse of patterns.
+;;  - Voice 4 is the BASENOTE. All notes of all voices are transposed by the active basenote.
+;;    The BASENOTE is read at the start of each NOTE-Pattern and used until the end of the pattern.
+;;
+;; There are two different type of patterns: NOTE-Patterns, which contain note-commands, and subpatterns,
+;; which contain a sequence of subpatterns, notepatterns and group-commands.
+;; Each voice keeps track of the pattern position via a "stack" with 7 slots, so the maximum pattern depth is 7.
+;; That means you can call a maximum depth of 6 different subpatterns before executing a notepattern
+
+;; #################################################
+;; PLAYER CONFIGURATION
+;; #################################################
+;;
+;; OPTIONAL FEATURES
+;; disable (set to 0) any unused features to save some space
+CFG_INSTRUMENT_BLOCK = 0        ; 0: disable: Any instrument may be overridden by drums the very next tick.
+                                ; 1: Block the use of the voice for drum overrides for instrument specific ticks (frames * 4) using the Instrument_Block-table.
+                                ;    COST: 13+(#instruments) bytes
+
+CFG_INSTRUMENT_USE_AD = 1       ; 0: only SR is used, AD is always $00
+                                ; 1: Instruments use AD of hull
+                                ;    COST: 6+(#instruments) bytes
+
+CFG_INSTRUMENT_USE_SR = 0       ; 0: only AD is used, SR is always $00
+                                ; 1: Instruments use SR of hull
+                                ;    COST: 6+(#instruments) bytes
+
+CFG_BASENOTE_PER_VOICE = 0      ; 0: BaseNote-commands directly contain the basenote
+                                ; 1: BaseNote-commands contain an index to the basenote-per-voice table (for voice 0-2)
+                                ;    COST: 7+(#BaseNote-table-entries*3) bytes, max 55b
+                                ; 2: BaseNote-commands contain an index to the basenote-per-voice table with only 2 entries per row.
+                                ;    Entry 0 is for Voice 0 and 14, Entry 1 is for Voice 7
+                                ;    COST: 6+(#BaseNote-table-entries*2) bytes, max 38b
+
+CFG_DRUMS_DEFAULT_VOICE = -1    ; -1: Use the lowest voice index that was most recently free.
+                                ;  0: Use voice 0 when all voices are busy. COST: 2b
+                                ;  2: Use voice 2 when all voices are busy. COST: 2b
+                                ;  3: Do not override any voice when all voices are busy COST: 2b
+
+CFG_RANDOM_GROUPS = 2           ; 0: No random group support. Shame... that's a key feature!
+                                ; 1: Pattern-Commands to pick randomly one out of four specified patterns
+                                ;    COST: 27 bytes
+                                ; 2: Like 1, plus a command to reset the random sequence to the value at the start of the current pattern
+                                ;    COST: 47 bytes
+
+CFG_MORE_PATTERNDATA = 0        ; 0: 256b of pattern data total, 128 patterns across all voices
+                                ; 1: unlimited pattern data, 128 patterns across all voices
+                                ;    COST: 32 bytes and a lot of worst-case rasterlines (ca. 8?)
+
+CFG_USE_WAVETABLE = 1           ; 0: fix waveform and note height for each note
+                                ; 1: enable complex instruments (waveform changes and arpeggios) via wavetable
+                                ;    COST: 41b + #instruments + additional wavetable data
+
+CFG_LONGNOTE_INSTRUMENTS = 0    ; 0: The instrument is always the specified one, regardless of note duration
+                                ; 1: CFG_LONGNOTE_THRESHOLD specifies the threshold at which CFG_LONGNOTE_INSTRUMENT_OFFSET is added to instrument
+                                ;    COST: 10 bytes
+                                ; 2: CFG_LONGNOTE_THRESHOLD specifies the threshold at which the Instrument in .Instrument_LongNoteInstrument should be used
+                                ;    COST: 10 bytes + #instruments
+                                ; 3: like 1, but the threshold is configured in Instrument_LongNoteThreshold
+                                ;    COST: 11 bytes + #instruments*2
+                                ; 4: like 2, but there can be more than two instruments, as the second is also asked for another threshold
+                                ;    COST: 13 bytes + #instruments
+CFG_LONGNOTE_INSTRUMENT_OFFSET = 10 ; only used with CFG_DURATION_INSTRUMENTS=1
+CFG_LONGNOTE_THRESHOLD = 4          ; only used with CFG_DURATION_INSTRUMENTS=(1 or 2)
+
+CFG_NOTES_ALL = 0               ; 0: only allow Notes of C-major (this makes transposition a lot easier)
+                                ; 1: allow all notes (transposition is less likely to fit the required half-tone steps)
+                                ;   COST: 10b notes table, less relative note range for note-commands
+
+CFG_SPEED = 4                   ; 3: one tick every 3 frames. COST: +3b
+                                ; 4: one tick every 4 frames
+                                ; 6: one tick every 6 frames
+
+!src "nanoplayer_notedefinitions.a"                                
+
+.MUSIC_Instruments:
+;;================================================================
+;;                      INSTRUMENT DEFINITION
+;; Instrument data : up to 16 Instruments
+;;================================================================
+
+;; Set to the first instrument (starting with index 0) that is used by a Drum-Command
+;; That is similar to a NOTE-Command, but instead of specifying a note played with the "current" instrument,
+;; it specifies an explicit instrument (that is not transposed by BASENOTE).
+;; Currently, 6 consecutive instruments can be accessed by drum-commands
+.cInstr_FirstDrum = 3
+
+;                           BASS        HAR         LEAD        SNARE  <-- Demo-Song Instruments, feel free to change
+; Attack / Decay
+!if (CFG_INSTRUMENT_USE_AD = 1){
+Instrument_AD:      !byte   $19,        $6C,        $19,        $08
+}
+; Sustain / Release
+!if (CFG_INSTRUMENT_USE_SR = 1){
+Instrument_SR:      !byte   $00,        $00,        $00,        $00
+}
+;; Without wavetable: specify a Waveform and Basenote for each Instrument    
+!if (CFG_USE_WAVETABLE = 0){
+Instrument_Wave:    !byte   $21,        $11,        $61,        $81
+Instrument_Note:    !byte   ._C1,       ._C2,       ._C4,       ._F7
+
+;; With wavetable: specify an offset in the wavetable for each Instrument    
+}else{
+Instrument_Wave:    !byte   .wv_bass,   .wv_har,    .wv_lead,   .wv_snare
+}
+
+;; When using BLOCK: specify number of ticks each instruments blocks drums from using that voice     
+!if (CFG_INSTRUMENT_BLOCK = 1){
+Instrument_Block:   !byte   1,          6,          1,          1
+}
+
+;; When using LONGNOTE 2 and up: specify the Instrument thats being used for Long notes 
+!if (CFG_LONGNOTE_INSTRUMENTS > 1){
+Instrument_LongNoteInstrument:
+                    !byte   $00,        $01,        $02,        $03
+}
+
+;; When using LONGNOTE 3 and up: specify the amount of ticks that make a note a longnote
+!if (CFG_LONGNOTE_INSTRUMENTS > 2){
+Instrument_LongNoteThreshold:
+                    !byte   4,          4,          4,          4
+}
+
+;; #################################################
+;; WAVETABLE : max 127b (1-127, index 0 is reserved)
+;; -------------------------;
+;; DO NOT CHANGE:           ;
+!if (CFG_USE_WAVETABLE > 0){;
+.MUSIC_WavetableData = *-1: ;
+.W = %11000000              ;
+.N = %10000000              ;
+.HALT = 0                   ;
+;; -------------------------;
+;;
+;; WAVETABLE COMMANDS:
+;; .W+x : Note value followed by a waveform. Example: .W+_G8,$81
+;; .N+x : Note value, does not change the active waveform. Example: .N+_G8
+;;              ATTENTION: When using CFG_NOTES_ALL, only notes up to Df5 can be specified
+;; value 1-127: Jump to that pattern index
+;; 0: HALT
+;;
+;.wv_bdrum = *-.MUSIC_WavetableData
+;    !byte ._G8+.W,$81, ._B0+.W,$11,   ._G0+.W,$11,   ._E0+.W,$11,   ._D0+.W,$11,   ._C0+.W,$11,   .HALT
+;.wv_hihat = *-.MUSIC_WavetableData
+;    !byte ._A8+.W,$81, ._G8+.W,$81,   ._D8+.W,$81,   .HALT
+.wv_snare = *-.MUSIC_WavetableData
+    !byte ._A8+.W,$81, ._A0+.W,$41,   ._E7+.W,$81,   ._G0+.W,$41,   ._B7+.W,$81,   .HALT
+.wv_bass = *-.MUSIC_WavetableData
+    !byte ._C1+.W,$21,  .HALT
+.wv_har = *-.MUSIC_WavetableData
+    !byte ._C2+.W,$11, ._E2+.N, ._C2+.N, ._G2+.N, ._C3+.N, .wv_har+2
+.wv_lead = *-.MUSIC_WavetableData
+    !byte ._C4+.W,$61,  .HALT
+}
+
+
+;;================================================================
+;;                      VOICE DEFAULT VALUES
+;;  Initial values for the 5 voices: V0, V7, V14, Drums, BaseNote
+;;================================================================
+
+;; Specify the delay in ticks at the beginning of the song for each voice (1 tick = 4 frames)
+.MUSIC_VoiceStartDelay:     
+    !byte 6, 70, 130, 42, 1         ;; BaseNote changes 5 before all others, Drums 4 late (on '2')
+
+;; Specify starting position for each voice
+!if (CFG_MORE_PATTERNDATA = 0){    
+.MUSIC_VoiceStartPos:       ;; start pattern index for each voice
+    !byte .MUSIC_StartPos_BASS, .MUSIC_StartPos_HARMONY, .MUSIC_StartPos_LEAD, .MUSIC_StartPos_DRUMS, .MUSIC_StartPos_BASENOTE
+}
+;; When using MORE_PATTERNDATA, specify the starting pattern index instead
+!if (CFG_MORE_PATTERNDATA = 1){    
+.MUSIC_VoiceStartPattern:       ;; start pattern index for each voice
+    !byte .MUSIC_StartPattern_BASS, .MUSIC_StartPattern_HARMONY, .MUSIC_StartPattern_LEAD, .MUSIC_StartPattern_DRUMS, .MUSIC_StartPattern_BASENOTE
+}
+
+; When BASENOTE_PER_VOICE is used, Basenote Commands contain a row-index to this table
+; Each row contains a basenote for every voice from 0-2
+; Specify only as many rows as needed (max. 16 rows)
+!if (CFG_BASENOTE_PER_VOICE = 1){
+.MUSIC_BaseNotePerVoiceTable:
+    ;       V0      V7      V14
+    !byte ._C1,     ._C1,   ._C1    ; Use this entry with .bX+0
+    !byte ._A0,     ._A0,   ._A0    ; Use this entry with .bX+1
+    ; ...
+}
+
+
+;;================================================================
+;;                          PATTERN DATA
+;;================================================================
+;;  When adding a pattern, always increase .MUSIC_cCountNotePattern accordingly
+;;  Each pattern MUST end with a return or repeat command.
+;;  These are .LOOP, .RET and .REP+X , repeating the pattern X times (2-7)
+;;  Patterns are enumerated from .PN ascending, starting with NOTE-PATTERNS
+
+.MUSIC_SongData:
+.MUSIC_PatternData:
+
+;;
+;;  ### NOTEPATTERN DATA ###
+;;
+;;  NOTE PATTERN COMMANDS:
+;;  [.nC0 - nB2]+x (x:[1-8]) : play the note with the current instrument and duration x
+;;  [.d0 - .d6]+x  (x:[1-8]) : play a drum sound with duration x
+;;  .P+x: (x:[1-15])         : pause for x ticks
+;;  .LOOP                    : restart pattern
+;;  .RET                     : return from pattern
+;;  .REP+x (x: [2-7])        : repeat the pattern x times, then return
+;;
+;;  The BASENOTE-Voice interprets commands differently, the commands are in the form DURATION+NOTE
+;;  where DURATION is .b1 until .b15 (the value is in 64*frames, so 16*ticks)
+;;  and NOTE is ._C0 to ._D2 (when using CFG_NOTES_ALL, only ._C0 to ._Df1)
+.MUSIC_NotePatternData:
+
+.PN = .cCMD_FirstPatternCmd ; Notes Pattern Command
+
+.PN_BASENOTE = .PN+0
+    !byte .b2+._C1, .b2+._A0, .b2+._F0, .b2+._G0, .RET                  ; Group GP+0
+    !byte .b2+._C1, .b2+._E1, .b2+._F0, .b2+._G0, .RET                  ; 1
+    !byte .b2+._C1, .b2+._E1, .b2+._F1, .b2+._G1, .RET                  ; 2
+    !byte .b2+._C1, .b2+._A0, .b2+._D1, .b2+._G0, .RET                  ; 3
+
+.PN_DRUMSOLO_1 = .PN_BASENOTE+4                                         ; Group GP+1
+    !byte .d0+4, .d0+4, .RET
+    !byte .d0+2, .d0+2, .d0+2, .d0+2, .RET
+    !byte .d0+6, .d0+2, .RET
+    !byte .d0+2, .d0+6, .RET
+
+.PN_LEAD_111 = .PN_DRUMSOLO_1+4                                         ; Group GP+2
+    !byte .nC1+2, .nD1+2, .nE1+4, .RET
+    !byte .nE1+4, .nD1+2, .nE1+2, .RET
+    !byte .nC1+2, .nE1+2, .nC1+4, .RET
+    !byte .nD1+4, .nD1+2, .nD1+2, .RET
+
+.PN_LEAD_121 = .PN_LEAD_111+4                                           ; Group GP+3
+    !byte .nF1+4, .nG1+4, .P+8, .RET
+    !byte .nF1+4, .nG1+4, .nA1+2, .nG1+6, .RET
+    !byte .nF1+4, .nG1+2, .nF1+4, .nE1+6, .RET
+    !byte .nF1+4, .nG1+4, .nA1+2, .nB1+6, .RET
+
+.PN_LEAD_122 = .PN_LEAD_121+4                                           ; Group GP+4
+    !byte .nG1+4, .nF1+2, .nE1+4, .nD1+6, .RET
+    !byte .nD1+4, .nE1+2, .nF1+4, .nG1+6, .RET
+    !byte .nD1+4, .nC1+2, .nD1+4, .nE1+6, .RET
+    !byte .nD1+4, .nC1+2, .nB0+4, .nA0+6, .RET
+
+.PN_LEAD_131 = .PN_LEAD_122+4                                           ; Group GP+5
+    !byte .P+8, .RET
+    !byte .P+8, .RET
+    !byte .nD1+4, .nC1+4, .RET
+    !byte .nD1+2, .nC1+6, .RET
+
+.PN_BASS = .PN_LEAD_131+4
+    !byte .nC1+8, .nG0+8, .nC1+6, .nG0+4, .nG0+2, .nC1+4, .REP+3        ; 2
+    !byte .nC1+8, .nG0+8, .nC1+6, .nC1+4, .nD1+2, .nE1+4, .RET          ; 3
+
+.PN_HARMONY = .PN_BASS + 2
+    !byte .nC1+8, .P+12, .P+12, .RET
+
+;SNARE
+.PN_DRUMS_1 = .PN_HARMONY + 1
+    !byte .d0+8, .REP+4                        ; 2
+
+.PN_IDLE = .PN_DRUMS_1+1
+    !byte .P+16, .P+16, .RET
+
+;; # SERVICE THIS! #
+.MUSIC_cCountNotePattern = .PN_IDLE+1 - .PN    
+!warn "#NotePatterns: ",.MUSIC_cCountNotePattern, " Size:", (* - .MUSIC_NotePatternData)
+    
+;;
+;; ### SUBPATTERN DATA ###
+;;
+;; SUBPATTERN COMMANDS:
+;;  .I+x  (x:[0-15])    : Change "current" instrument to x
+;;  [pattern-counter]   : SubPattern-Command (from 128-255, so starting at .cCMD_FirstPatternCmd)
+;;  .GP+x               : "randomly" invoke one of 4 patterns, from index (x*4) to index (x*4+3)
+;;  .G+x                : "randomly" invoke one of 4 patterns out of a list specified in the group data table below (max. 64 groups)
+;;  .RND                : Restore Rnd-Seed (to value at start of pattern)
+;;  .LOOP               : restart pattern
+;;  .RET                : return from pattern
+;;  .REP+x (x: [2-7])   : repeat the pattern x times, then return
+;; ---------------------------------;
+;; DO NOT CHANGE:                   ;
+.I = .cCMD_Instrument               ;
+.GP = .cCMD_FirstGroupPatternCmd    ;
+.G = .cCMD_FirstGroupDataCmd        ;
+;; ---------------------------------;
+
+;;  Continueing with subpatterns, which contain patterns and random-groups
+.PS = .cCMD_FirstPatternCmd + .MUSIC_cCountNotePattern; Subpattern command
+
+.cFirstNonNotePatternOffset = * - .MUSIC_SongData
+;;  Subpatterns. When adding a Pattern, always increase .cCountSubPattern accordingly
+.MUSIC_SubPatternData:
+
+.MUSIC_Start_BASENOTE:
+.P_BASENOTE = .PS+0
+    !byte .PN_BASENOTE+0, .G+0, .LOOP
+
+.MUSIC_Start_BASS:
+.P_BASS = .P_BASENOTE+1
+    !byte .PN_BASS+0, .PN_BASS+1, .LOOP
+
+.MUSIC_Start_HARMONY:
+.P_HARMONY = .P_BASS + 1
+    !byte .PN_HARMONY, .LOOP
+
+.P_LEAD = .P_HARMONY + 1
+    !byte .GP+2, .G+2, .GP+5, .RET
+
+.P_LEAD_PATTERN_AA = .P_LEAD+1
+    !byte .P_LEAD, .RND, .P_LEAD, .RET
+.P_LEAD_PATTERN_AABB = .P_LEAD_PATTERN_AA+1
+    !byte .P_LEAD_PATTERN_AA, .P_LEAD_PATTERN_AA, .RET     ; ABAB
+.P_LEAD_PATTERN_ABAB = .P_LEAD_PATTERN_AABB+1
+    !byte .P_LEAD, .P_LEAD, .RND, .REP+2                   ; ABAB
+.P_LEAD_PATTERN_ABBA = .P_LEAD_PATTERN_ABAB+1
+    !byte .P_LEAD, .P_LEAD_PATTERN_AA, .RND, .P_LEAD, .RET ; ABBA
+.P_LEAD_PATTERN_ABCD = .P_LEAD_PATTERN_ABBA+1
+    !byte .P_LEAD, .REP+4                                  ; ABCD
+
+.MUSIC_Start_LEAD:
+.P_LEAD_START = .P_LEAD_PATTERN_ABCD + 1
+    !byte .G+3, .LOOP
+    
+.MUSIC_Start_DRUMS:
+.P_DRUMS = .P_LEAD_START + 1
+    !byte .PN_DRUMS_1, .PN_DRUMS_1, .P_DRUMS+1, .PN_DRUMS_1, .LOOP
+    !byte .GP+1, .REP+4
+
+.MUSIC_Start_MUTE:
+.P_MUTE = .P_DRUMS+2
+    !byte .PN_IDLE, .LOOP
+.pLoopCmdPos = *-1
+
+.MUSIC_cCountSubPattern = .P_MUTE+1 - .PS
+.MUSIC_cCountAllPattern = .MUSIC_cCountSubPattern + .MUSIC_cCountNotePattern
+
+!warn "#SubPattern: ",.MUSIC_cCountSubPattern, " Size:", (* - .MUSIC_SubPatternData)
+!warn "Pattern Data size: ", * - .MUSIC_PatternData
+!if (CFG_MORE_PATTERNDATA = 0){
+    !if (* - .MUSIC_PatternData > 256){
+        !error("MAX 256b pattern data allowed")
+    }
+}
+!if (.MUSIC_cCountAllPattern > 128){
+    !error("MAX 128 patterns allowed")
+}
+
+
+;; Startpattern needed for CFG_MORE_PATTERNDATA = 1
+.MUSIC_StartPattern_BASENOTE = .P_BASENOTE
+.MUSIC_StartPattern_BASS = .P_BASS
+.MUSIC_StartPattern_HARMONY = .P_HARMONY
+.MUSIC_StartPattern_LEAD = .P_LEAD_START
+.MUSIC_StartPattern_DRUMS = .P_DRUMS
+
+;; Startpos needed for CFG_MORE_PATTERNDATA = 0
+.MUSIC_StartPos_BASENOTE = .MUSIC_Start_BASENOTE - .MUSIC_PatternData;
+.MUSIC_StartPos_BASS = .MUSIC_Start_BASS - .MUSIC_PatternData;
+.MUSIC_StartPos_HARMONY = .MUSIC_Start_HARMONY - .MUSIC_PatternData;
+.MUSIC_StartPos_LEAD = .MUSIC_Start_LEAD - .MUSIC_PatternData;
+.MUSIC_StartPos_DRUMS = .MUSIC_Start_DRUMS - .MUSIC_PatternData;
+.MUSIC_StartPos_MUTE = .MUSIC_Start_MUTE - .MUSIC_PatternData;
+
+;;
+;; ### GROUP DATA ###
+;;
+;; Each group consists of 4 pattern or group commands
+;; One of which is used randomly
+;;
+!if (CFG_RANDOM_GROUPS > 0){
+
+.MUSIC_GroupData:
+    !byte .PN_BASENOTE+0, .PN_BASENOTE+0, .PN_BASENOTE+1, .PN_BASENOTE+2        ; G0
+    !byte .PN_DRUMS_1, .PN_DRUMS_1, .PN_DRUMS_1, .PN_DRUMS_1                    ; G1
+    !byte .GP+3, .GP+3, .GP+4, .GP+4                    ; G2
+    !byte .P_LEAD_PATTERN_AABB, .P_LEAD_PATTERN_ABAB, .P_LEAD_PATTERN_ABBA, .P_LEAD_PATTERN_ABCD ; G3
+
+
+!warn "Group Data size:", * - .MUSIC_GroupData, " (#Groups: ", (* - .MUSIC_GroupData)/4, ")"
+}
+
+!warn "Music Data size: ", * - .MUSIC_Instruments
+
+
+

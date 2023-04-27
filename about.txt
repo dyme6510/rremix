@@ -1,0 +1,142 @@
+0. How To:
+==========
+You'll need to edit the nanoplayer_music.a file and then compile the
+nanoplayer.a file with the ACME cross compiler.
+
+0.1) Please install the ACME cross compiler.
+--------------------------------------------
+On Windows, you'll need to set a path to the ACME_Lib folder. You can do this
+by either setting the environment PATH variable or use the SET PATH command
+in the console prompt prior to running acme.exe on your file.
+
+0.2) Edit the nanoplayer_music.a file
+-------------------------------------
+There should be extensive commentary in the file that gives you an idea what
+to do. But I know that "extensive commentary" from my viewpoint will almost
+definitely mean "totally obscure" from your viewpoint, so please give me
+some feedback how to clear up things once you figured it out.
+
+0.3) Compile nanoplayer.a
+------------------------------
+That file imports the music file and wraps everything in a small player.
+If you want to use your song in a production, you'll figure everything
+out from the source code. Beware though that the player uses a lot of zeropage
+space (64 consecutive bytes).
+
+1. Premises:
+============
+Let's write a music player that is very small, but is not hand-coded for one
+specific music file. The music data should still be separate from the player,
+and the data format is not restricted to any kind of music.
+
+1.1) Command structure: one byte per command
+--------------------------------------------
+Most of the space used by music is occupied by the actual music data, not by
+the player code. To write a general purpose music player for constrained memory
+applications should therefore focus on establishing a compact music format.
+As appealing as decoding a huffman-coded bitstream may appear, we still have
+timing constraints though and will focus on having a music format in which
+every single command fits in exactly one byte, defining note height, instrument
+and note duration (delay until the next command is played).
+We'll have different command sets for notes and pattern sequencing though.
+
+1.2) Pattern reuseablility
+--------------------------
+Also focusing on small music data, recurring sequences of notes should not be
+stored redundantly.:
+
+1.2.1) Recursion
+Recurring sequence of notes should not be stored redundantly. So each note
+sequence should be broken down into very small sequences that can be reused
+multiple times. These pattern sequences in turn will also contain recurring
+sequences of note sequences, and these should also be reuseable. Which leads us
+to specifying a recursive command structure for sequence sequences.
+
+1.2.2) Demuxing drums
+Whenever you open a SID-file, you'll find that each of the three SID-voices has
+it's own note sequence, and the drums are intermixed in one or two voices.
+Naturally, this intermixing of two different instruments lessens redundancy,
+and should be avoided. In other players, usually the drums are on whichever
+voice is currently idle. When no voice is idle, the instrument of one voice is
+altered so it sounds like the freshly started note starts with the required
+drum sound. We should be able to separate the drums from the voices and do this
+in the player. So the player will featur an additional voice for the drums that
+does not correspond with a SID-voice but gets mixed into the SID-Voices.
+
+1.2.3) Transposing
+Adding a fix offset to a playing sequence of notes is easy, and music is full
+of recurring sequences of notes with the same distances but different heights.
+We now could easily specify a transposing offset before executing a given
+command and transpose all following notes by that offset. This would however
+require the use of specific "set transpose" commands. Since every instrument
+will have an explicit "base note" transposing offset, this is the same as
+changing instruments.
+Additionally, there can be a "global" base note for all voices, that is
+selected by a fifth virtual "voice" that only gets commands for selecting the
+global base note. At the start of a note sequence, that global base note is
+fetched and applied to all the notes in the sequence.
+
+1.2.4) Randomness
+An element of pseudo-randomness can lead to something akin to procedurally
+generated music. The easiest way to accomplish that would be to use a pseudo
+random generator to select one pattern out of a group of patterns. And we would
+have to be able to restore the random seed to a previous value to get repeating
+sequences random numbers. Since we are already aiming for a recursive approach,
+the storing/restoring could be done in the stack frame already present to store
+the current position for each pattern.
+
+2. Command structure:
+=====================
+
+2.1) Note Commands
+------------------
+Each command must specify note height and duration. Note height is given with
+an index to the note table. Each instrument is usually limited to a range of
+just a few octaves, so lets take 5 bits for the note and leave 3 bits for the
+duration. Each instrument will supply a base note, and the command note will
+be added on top of that.
+
+One "note" will be reserved for flow control (return/repeat) and some notes
+will be interpreted as fixed-note "drum" instruments. With four different drum
+instruments and one note for flow control that leaves us at a range of 27
+notes, thats more than 2 octaves. Or, when using only the white keys of the
+piano keyboard, almost 4 octaves.
+If that is not enough, one could make a point configuring the drum notes for
+each voice independantly, or only for the drum-voice. But the added range
+of four additional notes is rather small, so it's probably not worth the
+effort.
+
+2.2) Flow Control
+-----------------
+There should be a command to return from the current pattern, and a command to
+repeat a given pattern multiple times. It is quite easy to implement a repeat
+command for the current pattern, and really a return command is just the same
+as repeating the current pattern just that one time. So leaving a full note
+for flow control in the note-pattern, that gives us a command to repeat the
+current pattern 1-6 times before exiting, and one command for repeating the
+pattern indefinitely.
+
+2.3) Sequencing Commands
+------------------------
+Each sequencing command must be able to
+    - invoke a note pattern
+    - invoke a sequencing pattern
+    - have the standard flow control commands
+    - switch the voice instrument
+    - invoke randomness commands:
+        - push/pop random seed
+        - select a random pattern out of a group of patterns (one of four)
+
+For easy parsing, I settled on 128 note patterns, and 96 random group commands,
+where 32 groups refer directly to the patterns 0-3, 4-7 and so on and 64 groups
+are freely configured in an extra table. Then theres 2 commands for saving
+and restoring the random seed in the current stack frame, 22 switch instrument
+commands and the already known 8 flow control commands that are also available
+for note patterns.
+
+2.4) Basenote Transposing Commands
+----------------------------------
+The basenote is expected to change much slower, so the note commands for the
+base note "voice" will follow a different pattern, and have a different tick
+length. One tick for the basenote voice is one tick in 64 frames, which equals
+16 note ticks. The common flow control commands are also available.

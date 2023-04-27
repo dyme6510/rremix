@@ -1,0 +1,225 @@
+
+!if (CFG_NOTES_ALL = 1){    
+    ._C0  = 0
+    ._Cf0 = 1
+    ._D0  = 2
+    ._Df0 = 3
+    ._E0  = 4
+    ._F0  = 5
+    ._Ff0 = 6
+    ._G0  = 7
+    ._Gf0 = 8
+    ._A0  = 9
+    ._Af0 = 10
+    ._B0  = 11   
+    ._OCT = 12
+}else{
+    ._C0  = 0
+    ._Cf0 = 0
+    ._D0  = 1
+    ._Df0 = 1
+    ._E0  = 2
+    ._F0  = 3
+    ._Ff0 = 3
+    ._G0  = 4
+    ._Gf0 = 4
+    ._A0  = 5
+    ._Af0 = 5
+    ._B0  = 6   
+    ._OCT = 7
+}
+
+._C1  = ._C0  + ._OCT
+._Cf1 = ._Cf0 + ._OCT
+._D1  = ._D0  + ._OCT
+._Df1 = ._Df0 + ._OCT
+._E1  = ._E0  + ._OCT
+._F1  = ._F0  + ._OCT
+._Ff1 = ._Ff0 + ._OCT
+._G1  = ._G0  + ._OCT
+._Gf1 = ._Gf0 + ._OCT
+._A1  = ._A0  + ._OCT
+._Af1 = ._Af0 + ._OCT
+._B1  = ._B0  + ._OCT
+
+._C2  = ._C1  + ._OCT
+._Cf2 = ._Cf1 + ._OCT
+._D2  = ._D1  + ._OCT
+._Df2 = ._Df1 + ._OCT
+._E2  = ._E1  + ._OCT
+._F2  = ._F1  + ._OCT
+._Ff2 = ._Ff1 + ._OCT
+._G2  = ._G1  + ._OCT
+._Gf2 = ._Gf1 + ._OCT
+._A2  = ._A1  + ._OCT
+._Af2 = ._Af1 + ._OCT
+._B2  = ._B1  + ._OCT
+
+._C3  = ._C2  + ._OCT
+._Cf3 = ._Cf2 + ._OCT
+._D3  = ._D2  + ._OCT
+._Df3 = ._Df2 + ._OCT
+._E3  = ._E2  + ._OCT
+._F3  = ._F2  + ._OCT
+._Ff3 = ._Ff2 + ._OCT
+._G3  = ._G2  + ._OCT
+._Gf3 = ._Gf2 + ._OCT
+._A3  = ._A2  + ._OCT
+._Af3 = ._Af2 + ._OCT
+._B3  = ._B2  + ._OCT
+
+._C4  = ._C3  + ._OCT
+._Cf4 = ._Cf3 + ._OCT
+._D4  = ._D3  + ._OCT
+._Df4 = ._Df3 + ._OCT
+._E4  = ._E3  + ._OCT
+._F4  = ._F3  + ._OCT
+._Ff4 = ._Ff3 + ._OCT
+._G4  = ._G3  + ._OCT
+._Gf4 = ._Gf3 + ._OCT
+._A4  = ._A3  + ._OCT
+._Af4 = ._Af3 + ._OCT
+._B4  = ._B3  + ._OCT
+
+._C5  = ._C4  + ._OCT
+._Cf5 = ._Cf4 + ._OCT
+._D5  = ._D4  + ._OCT
+._Df5 = ._Df4 + ._OCT
+._E5  = ._E4  + ._OCT
+._F5  = ._F4  + ._OCT
+._Ff5 = ._Ff4 + ._OCT
+._G5  = ._G4  + ._OCT
+._Gf5 = ._Gf4 + ._OCT
+._A5  = ._A4  + ._OCT
+._Af5 = ._Af4 + ._OCT
+._B5  = ._B4  + ._OCT
+
+._C6  = ._C5  + ._OCT
+._Cf6 = ._Cf5 + ._OCT
+._D6  = ._D5  + ._OCT
+._Df6 = ._Df5 + ._OCT
+._E6  = ._E5  + ._OCT
+._F6  = ._F5  + ._OCT
+._Ff6 = ._Ff5 + ._OCT
+._G6  = ._G5  + ._OCT
+._Gf6 = ._Gf5 + ._OCT
+._A6  = ._A5  + ._OCT
+._Af6 = ._Af5 + ._OCT
+._B6  = ._B5  + ._OCT
+
+._C7  = ._C6  + ._OCT
+._Cf7 = ._Cf6 + ._OCT
+._D7  = ._D6  + ._OCT
+._Df7 = ._Df6 + ._OCT
+._E7  = ._E6  + ._OCT
+._F7  = ._F6  + ._OCT
+._Ff7 = ._Ff6 + ._OCT
+._G7  = ._G6  + ._OCT
+._Gf7 = ._Gf6 + ._OCT
+._A7  = ._A6  + ._OCT
+._Af7 = ._Af6 + ._OCT
+._B7  = ._B6  + ._OCT
+
+._C8  = ._C7  + ._OCT
+._Cf8 = ._Cf7 + ._OCT
+._D8  = ._D7  + ._OCT
+._Df8 = ._Df7 + ._OCT
+._E8  = ._E7  + ._OCT
+._F8  = ._F7  + ._OCT
+._Ff8 = ._Ff7 + ._OCT
+._G8  = ._G7  + ._OCT
+._Gf8 = ._Gf7 + ._OCT
+._A8  = ._A7  + ._OCT
+._Af8 = ._Af7 + ._OCT
+;;._B8  = ._B7  + ._OCT
+
+
+;;
+;; NOTE COMMANDS
+;;
+
+.nC0 = ((._C0+.cNodeCMD_FirstNote) << 3)-1
+.nCf0 = ((._Cf0+.cNodeCMD_FirstNote) << 3)-1
+.nD0 = ((._D0+.cNodeCMD_FirstNote) << 3)-1
+.nDf0 = ((._Df0+.cNodeCMD_FirstNote) << 3)-1
+.nE0 = ((._E0+.cNodeCMD_FirstNote) << 3)-1
+.nF0 = ((._F0+.cNodeCMD_FirstNote) << 3)-1
+.nFf0 = ((._Ff0+.cNodeCMD_FirstNote) << 3)-1
+.nG0 = ((._G0+.cNodeCMD_FirstNote) << 3)-1
+.nGf0 = ((._Gf0+.cNodeCMD_FirstNote) << 3)-1
+.nA0 = ((._A0+.cNodeCMD_FirstNote) << 3)-1
+.nAf0 = ((._Af0+.cNodeCMD_FirstNote) << 3)-1
+.nB0 = ((._B0+.cNodeCMD_FirstNote) << 3)-1
+
+.nC1 = ((._C1+.cNodeCMD_FirstNote) << 3)-1
+.nCf1 = ((._Cf1+.cNodeCMD_FirstNote) << 3)-1
+.nD1 = ((._D1+.cNodeCMD_FirstNote) << 3)-1
+.nDf1 = ((._Df1+.cNodeCMD_FirstNote) << 3)-1
+.nE1 = ((._E1+.cNodeCMD_FirstNote) << 3)-1
+.nF1 = ((._F1+.cNodeCMD_FirstNote) << 3)-1
+.nFf1 = ((._Ff1+.cNodeCMD_FirstNote) << 3)-1
+.nG1 = ((._G1+.cNodeCMD_FirstNote) << 3)-1
+.nGf1 = ((._Gf1+.cNodeCMD_FirstNote) << 3)-1
+.nA1 = ((._A1+.cNodeCMD_FirstNote) << 3)-1
+.nAf1 = ((._Af1+.cNodeCMD_FirstNote) << 3)-1
+.nB1 = ((._B1+.cNodeCMD_FirstNote) << 3)-1
+
+.nC2 = ((._C2+.cNodeCMD_FirstNote) << 3)-1
+.nCf2 = ((._Cf2+.cNodeCMD_FirstNote) << 3)-1
+.nD2 = ((._D2+.cNodeCMD_FirstNote) << 3)-1
+.nDf2 = ((._Df2+.cNodeCMD_FirstNote) << 3)-1
+.nE2 = ((._E2+.cNodeCMD_FirstNote) << 3)-1
+.nF2 = ((._F2+.cNodeCMD_FirstNote) << 3)-1
+.nFf2 = ((._Ff2+.cNodeCMD_FirstNote) << 3)-1
+.nG2 = ((._G2+.cNodeCMD_FirstNote) << 3)-1
+.nGf2 = ((._Gf2+.cNodeCMD_FirstNote) << 3)-1
+.nA2 = ((._A2+.cNodeCMD_FirstNote) << 3)-1
+.nAf2 = ((._Af2+.cNodeCMD_FirstNote) << 3)-1
+.nB2 = ((._B2+.cNodeCMD_FirstNote) << 3)-1
+
+;;
+;; Drums COMMANDS
+;;
+
+.d0 = ((0+.cNodeCMD_FirstDrum) << 3)-1
+.d1 = ((1+.cNodeCMD_FirstDrum) << 3)-1
+.d2 = ((2+.cNodeCMD_FirstDrum) << 3)-1
+.d3 = ((3+.cNodeCMD_FirstDrum) << 3)-1
+.d4 = ((4+.cNodeCMD_FirstDrum) << 3)-1
+.d5 = ((5+.cNodeCMD_FirstDrum) << 3)-1
+.d6 = ((6+.cNodeCMD_FirstDrum) << 3)-1
+.d7 = ((7+.cNodeCMD_FirstDrum) << 3)-1
+.d8 = ((8+.cNodeCMD_FirstDrum) << 3)-1
+
+;;
+;; PAUSE COMMAND
+;;
+.P = .cCMD_PauseCmd-1
+
+.RND = .cCMD_RndRestore
+
+;;
+;; BASENOTE COMMAND: .b[anzahl Takte] + Note (._C1) e.g.:  .b4+._C1
+;;
+.b1 = 1<<4
+.b2 = 2<<4
+.b3 = 3<<4
+.b4 = 4<<4
+.b5 = 5<<4
+.b6 = 6<<4
+.b7 = 7<<4
+.b8 = 8<<4
+.b9 = 9<<4
+.b10 = 10<<4
+.b11 = 11<<4
+.b12 = 12<<4
+.b13 = 13<<4
+.b14 = 14<<4
+.b15 = 15<<4
+
+;;
+;; Jump COMMANDS
+;;
+.RET = 1
+.LOOP = 0
+.REP = 0
