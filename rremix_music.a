@@ -57,7 +57,7 @@ RMX_MORE_PATTERNDATA = 0        ; 0: 256b of pattern data total, 128 patterns ac
                                 ; 1: unlimited pattern data, 128 patterns across all voices
                                 ;    COST: 32 bytes and a lot of worst-case rasterlines (ca. 8?)
 
-RMX_USE_WAVETABLE = 1           ; 0: fix waveform and note height for each note
+RMX_USE_WAVETABLE = 0           ; 0: fix waveform and note height for each note
                                 ; 1: enable complex instruments (waveform changes and arpeggios) via wavetable
                                 ;    COST: 41b + #instruments + additional wavetable data
 
@@ -106,7 +106,7 @@ Instrument_SR:      !byte   $00,        $00,        $00,        $00
 }
 ;; Without wavetable: specify a Waveform and Basenote for each Instrument    
 !if (RMX_USE_WAVETABLE = 0){
-Instrument_Wave:    !byte   $21,        $11,        $61,        $81
+Instrument_Wave:    !byte   $21,        $11,        $41,        $81
 Instrument_Note:    !byte   ._C1,       ._C2,       ._C4,       ._F7
 
 ;; With wavetable: specify an offset in the wavetable for each Instrument    
@@ -211,16 +211,16 @@ Instrument_LongNoteThreshold:
 ;;  ### NOTEPATTERN DATA ###
 ;;
 ;;  NOTE PATTERN COMMANDS:
-;;  [.nC0 - nB2]+x (x:[1-8]) : play the note with the current instrument and duration x
-;;  [.d0 - .d6]+x  (x:[1-8]) : play a drum sound with duration x
+;;  [.nC0 - nB2]+x (x:[1-7]) : play the note with the current instrument and duration x
+;;  [.d0 - .d6]+x  (x:[1-7]) : play a drum sound with duration x
 ;;  .P+x: (x:[1-15])         : pause for x ticks
 ;;  .LOOP                    : restart pattern
 ;;  .RET                     : return from pattern
 ;;  .REP+x (x: [2-7])        : repeat the pattern x times, then return
 ;;
 ;;  The BASENOTE-Voice interprets commands differently, the commands are in the form DURATION+NOTE
-;;  where DURATION is .b1 until .b15 (the value is in 64*frames, so 16*ticks)
-;;  and NOTE is ._C0 to ._D2 (when using RMX_NOTES_ALL, only ._C0 to ._Df1)
+;;  where DURATION is .b1 until .b15 (the value is in 64*frames, so 16*note)
+;;  and NOTE is ._C0 to ._D2
 .MUSIC_NotePatternData:
 
 .PN = .cCMD_FirstPatternCmd ; Notes Pattern Command
@@ -261,21 +261,24 @@ Instrument_LongNoteThreshold:
     !byte .nD1+4, .nC1+4, .RET
     !byte .nD1+2, .nC1+6, .RET
 
-.PN_BASS = .PN_LEAD_131+4
+.PN_HARMONY = .PN_LEAD_131 + 4											; Group GP+6
+    !byte .nC1+8, .nD1+4, .nE1+4, .RET
+    !byte .nC1+6, .nD1+6, .nE1+4, .RET
+    !byte .nC1+8, .nF1+4, .nG1+4, .RET
+    !byte .nG1+8, .nG1+4, .nF1+4, .RET
+
+.PN_BASS = .PN_HARMONY+4
     !byte .nC1+8, .nG0+8, .nC1+6, .nG0+4, .nG0+2, .nC1+4, .REP+3        ; 2
     !byte .nC1+8, .nG0+8, .nC1+6, .nC1+4, .nD1+2, .nE1+4, .RET          ; 3
 
-.PN_HARMONY = .PN_BASS + 2
-    !byte .nC1+8, .P+12, .P+12, .RET
 
 ;SNARE
-.PN_DRUMS_1 = .PN_HARMONY + 1
+.PN_DRUMS_1 = .PN_BASS + 2
     !byte .d0+8, .REP+4                        ; 2
 
 .PN_IDLE = .PN_DRUMS_1+1
     !byte .P+16, .P+16, .RET
 
-;; # SERVICE THIS! #
 .MUSIC_cCountNotePattern = .PN_IDLE+1 - .PN    
 !warn "#NotePatterns: ",.MUSIC_cCountNotePattern, " Size:", (* - .MUSIC_NotePatternData)
     
@@ -315,10 +318,11 @@ Instrument_LongNoteThreshold:
 
 .MUSIC_Start_HARMONY:
 .P_HARMONY = .P_BASS + 1
-    !byte .PN_HARMONY, .LOOP
+    !byte .GP+6, .LOOP
 
 .P_LEAD = .P_HARMONY + 1
-    !byte .GP+2, .G+2, .GP+5, .RET
+    !byte .GP+2, .G+1, .GP+5, .RET
+	
 
 .P_LEAD_PATTERN_AA = .P_LEAD+1
     !byte .P_LEAD, .RND, .P_LEAD, .RET
@@ -333,7 +337,7 @@ Instrument_LongNoteThreshold:
 
 .MUSIC_Start_LEAD:
 .P_LEAD_START = .P_LEAD_PATTERN_ABCD + 1
-    !byte .G+3, .LOOP
+    !byte .G+2, .LOOP
     
 .MUSIC_Start_DRUMS:
 .P_DRUMS = .P_LEAD_START + 1
@@ -375,6 +379,9 @@ Instrument_LongNoteThreshold:
 .MUSIC_StartPos_DRUMS = .MUSIC_Start_DRUMS - .MUSIC_PatternData;
 .MUSIC_StartPos_MUTE = .MUSIC_Start_MUTE - .MUSIC_PatternData;
 
+.MUSIC_cAnyLoopCmdPos = .pLoopCmdPos-.MUSIC_PatternData
+
+
 ;;
 ;; ### GROUP DATA ###
 ;;
@@ -384,10 +391,9 @@ Instrument_LongNoteThreshold:
 !if (RMX_RANDOM_GROUPS > 0){
 
 .MUSIC_GroupData:
-    !byte .PN_BASENOTE+0, .PN_BASENOTE+0, .PN_BASENOTE+1, .PN_BASENOTE+2        ; G0
-    !byte .PN_DRUMS_1, .PN_DRUMS_1, .PN_DRUMS_1, .PN_DRUMS_1                    ; G1
-    !byte .GP+3, .GP+3, .GP+4, .GP+4                    ; G2
-    !byte .P_LEAD_PATTERN_AABB, .P_LEAD_PATTERN_ABAB, .P_LEAD_PATTERN_ABBA, .P_LEAD_PATTERN_ABCD ; G3
+    !byte .PN_BASENOTE+0, .PN_BASENOTE+0, .PN_BASENOTE+1, .PN_BASENOTE+2        					; G+0
+    !byte .GP+3, .GP+3, .GP+4, .GP+4                    											; G+1
+    !byte .P_LEAD_PATTERN_AABB, .P_LEAD_PATTERN_ABAB, .P_LEAD_PATTERN_ABBA, .P_LEAD_PATTERN_ABCD 	; G+2
 
 
 !warn "Group Data size:", * - .MUSIC_GroupData, " (#Groups: ", (* - .MUSIC_GroupData)/4, ")"
