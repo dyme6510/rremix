@@ -25,11 +25,11 @@ SIZECOUNT_MUSIC_START = *
 SIZECOUNT_PLAYER_START = *
 
 
-pMusicFreqTable = RReMiX_Memory ; $3C00   120b frequency table
+.pMusicFreqTable = RReMiX_Memory ; $3C00   120b frequency table
 
 !if (RMX_MORE_PATTERNDATA = 1){
-    pPatternIndexDataLo = pMusicFreqTable + 128 ; 256b Pattern start index table (16 bit)
-    pPatternIndexDataHi = pMusicFreqTable + 256 ;
+    .pPatternIndexDataLo = .pMusicFreqTable + 128 ; 256b Pattern start index table (16 bit)
+    .pPatternIndexDataHi = .pMusicFreqTable + 256 ;
     
     .pVoiceStackPtr = RReMiX_Memory + $200 ; $3D00 35 bytes
     .pVoiceStack_PC = .pVoiceStackPtr
@@ -38,7 +38,7 @@ pMusicFreqTable = RReMiX_Memory ; $3C00   120b frequency table
     .pVoiceStack_PATTERN = .pVoiceStackPtr + 105
 
 }else{
-    pPatternIndexData = pMusicFreqTable + 128 ; 128b Pattern start index table (8 bit)
+    .pPatternIndexData = .pMusicFreqTable + 128 ; 128b Pattern start index table (8 bit)
     
     .pVoiceStackPtr = RReMiX_Memory + $100 ; $3D00 70 bytes
     .pVoiceStack_PC = .pVoiceStackPtr
@@ -60,42 +60,42 @@ pMusicFreqTable = RReMiX_Memory ; $3C00   120b frequency table
 .cZP1 = RReMiX_Zeropage+35 ; 7*3 ZP-Plätze (7 für Jede 'echte' Stimme 0-2)
 .cZP2 = RReMiX_Zeropage+56 ; Player variables
 
-zpVoiceStackPtr = .cZP0+0
-zvVoiceStackPtrHi = .cZP0+1  ; 7 Plätze: 6 für Pattern, 1 für Note
-zvVoiceRnd  = .cZP0+2
-zvVoiceNoteDuration = .cZP0+3
-zvVoiceNoteCommand = .cZP0+4
-zvVoiceBaseNote = .cZP0+5   ; not needed for voice 3,4, but will be reset every notepattern
+.zpVoiceStackPtr = .cZP0+0
+.zvVoiceStackPtrHi = .cZP0+1  ; 7 Plätze: 6 für Pattern, 1 für Note
+.zvVoiceRnd  = .cZP0+2
+.zvVoiceNoteDuration = .cZP0+3
+.zvVoiceNoteCommand = .cZP0+4
+.zvVoiceBaseNote = .cZP0+5   ; not needed for voice 3,4, but will be reset every notepattern
 
 !if (RMX_MORE_PATTERNDATA = 1){
-    zvVoice_NotePatternFlag = .cZP0+6
+    .zvVoiceNotePatternFlag = .cZP0+6
 }
 
-zvVoiceInstrument = .cZP1+0
-zvVoiceCurrentNote = .cZP1+1
-zvVoiceWavetableIndex = .cZP1+2
-zvVoiceInstrumentBlock = .cZP1+3 ; Minimal Tone Length for Instrument (May not be overriden by Drums in this time)
+.zvVoiceInstrument = .cZP1+0
+.zvVoiceCurrentNote = .cZP1+1
+.zvVoiceWavetableIndex = .cZP1+2
+.zvVoiceInstrumentBlock = .cZP1+3 ; Minimal Tone Length for Instrument (May not be overriden by Drums in this time)
 
 ;; BaseNote and Drums do not need Instrument or BaseNote data
 ;; So these can be reused... but BaseNote will be overwritten with BaseNote every notepattern
-.zvTmp = zvVoiceBaseNote+21
-zvPlayer_CurrentBaseNote = zvVoiceBaseNote+28
+.zvTmp = .zvVoiceBaseNote+21
+.zvPlayer_CurrentBaseNote = .zvVoiceBaseNote+28
 
-zvPlayer_NextVoiceCheck = .cZP2+0
-zvPlayer_FreeDrumsVoice = .cZP2+1
+.zvPlayer_NextVoiceCheck = .cZP2+0
+.zvPlayer_FreeDrumsVoice = .cZP2+1
 
 !if (RMX_MORE_PATTERNDATA = 1){
     zpPlayerPatternPtr = .cZP2+2;+3
 }
 
-.zvDrumsCommand = zvVoiceNoteCommand + 3*7
-.zvBaseNoteCommand = zvVoiceNoteCommand + 4*7
-.zvBaseNoteDuration = zvVoiceNoteDuration + 4*7
+.zvDrumsCommand = .zvVoiceNoteCommand + 3*7
+.zvBaseNoteCommand = .zvVoiceNoteCommand + 4*7
+.zvBaseNoteDuration = .zvVoiceNoteDuration + 4*7
 
 .zvTmpHardResetCmd = .zvTmp
 
-.FreqTableLo = pMusicFreqTable + 1
-.FreqTableHi = pMusicFreqTable + 64
+.FreqTableLo = .pMusicFreqTable + 1
+.FreqTableHi = .pMusicFreqTable + 64
 
 !if (RMX_NOTES_ALL = 1){
     ;                      B7  C8 Cf8  D8 Df8  E8  F8 Ff8  G8 Gf8  A8 A#8
@@ -141,7 +141,7 @@ RReMiX_Init:
 
 !if (RMX_MORE_PATTERNDATA = 0){
     tax
---  sta pPatternIndexData,y
+--  sta .pPatternIndexData,y
     iny
 .vPatternDataHi = *+2
 -   lda .MUSIC_PatternData,x
@@ -157,9 +157,9 @@ RReMiX_Init:
 !if (RMX_MORE_PATTERNDATA = 1){
     ldx #<.MUSIC_PatternData
 --  txa    
-    sta pPatternIndexDataLo,y
+    sta .pPatternIndexDataLo,y
     lda .vPatternDataHi
-    sta pPatternIndexDataHi,y    
+    sta .pPatternIndexDataHi,y    
 .vPatternDataHi = *+2
 -   lda .MUSIC_PatternData & $FF00,x
     inx
@@ -176,23 +176,23 @@ RReMiX_Init:
     ; init all voices
     ldx #28
     ldy #4
-    stx zvPlayer_NextVoiceCheck
+    stx .zvPlayer_NextVoiceCheck
 
 -   lda #>.pVoiceStackPtr
-    sta zvVoiceStackPtrHi,x
+    sta .zvVoiceStackPtrHi,x
 !if (RMX_RANDOM_GROUPS = 2){    
     ;; RND darf niemals 0 sein
-    sta zvVoiceRnd,x
+    sta .zvVoiceRnd,x
 }
     txa
 !if (0 != <.pVoiceStackPtr){
     adc #<.pVoiceStackPtr
 }
-    sta zpVoiceStackPtr,x           ;_16
+    sta .zpVoiceStackPtr,x           ;_16
 
 !if (RMX_MORE_PATTERNDATA = 0){    
     lda .MUSIC_VoiceStartPos,y
-    sta (zpVoiceStackPtr,x)
+    sta (.zpVoiceStackPtr,x)
     sta .pVoiceStack_STARTPOS,x
 }
 !if (RMX_MORE_PATTERNDATA = 1){
@@ -201,11 +201,11 @@ RReMiX_Init:
 }
 
     lda .MUSIC_VoiceStartDelay,y
-    sta zvVoiceNoteDuration,x
+    sta .zvVoiceNoteDuration,x
 
     cpx #15
     bcs +
-    sty zvVoiceInstrument,x
+    sty .zvVoiceInstrument,x
     lda #$08
     sta sid_v1_width_hi,x           ;_21 init pulse width to 0800
 +
@@ -241,27 +241,6 @@ RReMiX_Init:
 
 ;; NOTEPATTERN COMMANDS:
 
-!macro LoadBaseNoteValueOrIndex{
-    !if (RMX_BASENOTE_PER_VOICE = 0){
-        lda zvPlayer_CurrentBaseNote
-    }
-    !if (RMX_BASENOTE_PER_VOICE = 1){
-        ; A: BaseNoteIndex*3 + (x/7)%3
-        lda zvPlayer_CurrentBaseNote
-        cpx #14         ; add 1 for >=14
-        rol
-        cpx #7          ; add 1 for >=7
-        adc zvPlayer_CurrentBaseNote    ;_9
-    }
-    !if (RMX_BASENOTE_PER_VOICE = 2){
-        ; A: BaseNoteIndex*2 + x%2
-        txa
-        lsr
-        lda zvPlayer_CurrentBaseNote
-        rol                             ;_5
-    }
-}
-
 
  ; Group 32*4 -> 001xxxxx Pattern# 0-3, 4-7, 8-11 etc.
  ; Group 64*4 -> 01xxxxxx GroupData-Offset, 4b per group, all commands
@@ -270,9 +249,9 @@ RReMiX_Init:
     asl
     sta .zvTmp
     lda #.cPRNG_EOR
-    sre zvVoiceRnd,x
+    sre .zvVoiceRnd,x
     bcc +
-    sta zvVoiceRnd,x
+    sta .zvVoiceRnd,x
 +   and #3
     slo .zvTmp
     bcc .ParsePattern_SubOrNotespattern
@@ -286,21 +265,21 @@ RReMiX_Init:
 !if (RMX_MORE_PATTERNDATA = 1){
     sbc #.MUSIC_cCountNotePattern+.cCMD_FirstPatternCmd
     asl
-    rol zvVoice_NotePatternFlag,x  
+    rol .zvVoiceNotePatternFlag,x  
     tya
-    inc zpVoiceStackPtr,x
-    ldy zpVoiceStackPtr,x
+    inc .zpVoiceStackPtr,x
+    ldy .zpVoiceStackPtr,x
     sta .pVoiceStack_PATTERN,y      ;_13 
 }else{
-    lda pPatternIndexData-.cCMD_FirstPatternCmd,y
-    inc zpVoiceStackPtr,x
-    ldy zpVoiceStackPtr,x
+    lda .pPatternIndexData-.cCMD_FirstPatternCmd,y
+    inc .zpVoiceStackPtr,x
+    ldy .zpVoiceStackPtr,x
     sta .pVoiceStack_STARTPOS,y     ;_10
 }    
     lda #0
     sta .pVoiceStack_REPCOUNT,y
 !if (RMX_RANDOM_GROUPS = 2){    
-    lda zvVoiceRnd,x
+    lda .zvVoiceRnd,x
     sta .pVoiceStack_RNDSEED,y      ;_21b
 }
 
@@ -310,44 +289,61 @@ RReMiX_Init:
 }else{
     lda .pVoiceStack_STARTPOS,y
 }
-    sta (zpVoiceStackPtr,x)
-    +LoadBaseNoteValueOrIndex
-    sta zvVoiceBaseNote,x
+    sta (.zpVoiceStackPtr,x)
+!if (RMX_BASENOTE_PER_VOICE = 0){
+	lda .zvPlayer_CurrentBaseNote
+}
+!if (RMX_BASENOTE_PER_VOICE = 1){
+	; A: BaseNoteIndex*3 + (x/7)%3
+	lda .zvPlayer_CurrentBaseNote
+	cpx #14         ; add 1 for >=14
+	rol
+	cpx #7          ; add 1 for >=7
+	adc .zvPlayer_CurrentBaseNote    ;_9
+}
+!if (RMX_BASENOTE_PER_VOICE = 2){
+	; A: BaseNoteIndex*2 + x%2
+	txa
+	lsr
+	lda .zvPlayer_CurrentBaseNote
+	rol                             ;_5
+}
+    sta .zvVoiceBaseNote,x
     jmp .Parse_ReadPatternCmd       ;_12b  always taken, but not neccessarily initialized, so jmp instead of bpl
 
 .Parse_Return: ;; Return / Repeat opcode in A, Location of opcode (and RepeatCounter) in Y
-    ldy zpVoiceStackPtr,x
+    ldy .zpVoiceStackPtr,x
     cmp #0                      ; cmp A to 0 and set carry
     beq .Parse_Return_Repeat
     isc .pVoiceStack_REPCOUNT,y ; carry is still set
     bne .Parse_Return_Repeat
-    dec zpVoiceStackPtr,x           ;_13b
+    dec .zpVoiceStackPtr,x           ;_13b
 !if (RMX_MORE_PATTERNDATA = 1){
-    sta zvVoice_NotePatternFlag,x
+    sta .zvVoiceNotePatternFlag,x
 }
 
 .Parse_ReadPatternCmd:
 !if (RMX_MORE_PATTERNDATA = 1){
-    ldy zpVoiceStackPtr,x
+    ldy .zpVoiceStackPtr,x
     lda .pVoiceStack_PATTERN,y
     tay
     
-    lda pPatternIndexDataHi-.cCMD_FirstPatternCmd,y
+    lda .pPatternIndexDataHi-.cCMD_FirstPatternCmd,y
     sta zpPlayerPatternPtr+1
-    lda pPatternIndexDataLo-.cCMD_FirstPatternCmd,y
+    lda .pPatternIndexDataLo-.cCMD_FirstPatternCmd,y
     sta zpPlayerPatternPtr
-    lda (zpVoiceStackPtr,x)
+    lda (.zpVoiceStackPtr,x)
     tay
-    isc (zpVoiceStackPtr,x)
+    isc (.zpVoiceStackPtr,x)
     lda (zpPlayerPatternPtr),y
     cmp #.cCMD_AfterReturn                  ; 0-15:     Return/Repeat Commands
     bcc .Parse_Return    
-    ldy zvVoice_NotePatternFlag,x
+    ldy .zvVoiceNotePatternFlag,x
     bne .ParseNoteCmdA              ;_34b
 }else{
-    lda (zpVoiceStackPtr,x)
+    lda (.zpVoiceStackPtr,x)
     tay
-    isc (zpVoiceStackPtr,x)
+    isc (.zpVoiceStackPtr,x)
     lda .MUSIC_PatternData,y
     cmp #.cCMD_AfterReturn                  ; 0-15:     Return/Repeat Commands
     bcc .Parse_Return
@@ -367,86 +363,47 @@ RReMiX_Init:
 !if (RMX_RANDOM_GROUPS = 2){
     cmp #.cCMD_RndRestore
     bne +
-    ldy zpVoiceStackPtr,x
+    ldy .zpVoiceStackPtr,x
     lda .pVoiceStack_RNDSEED,y
-    sta zvVoiceRnd,x
+    sta .zvVoiceRnd,x
     bcs .Parse_ReadPatternCmd ; always taken
 +    
 }
     and #.cCMD_InstrumentMask
-    sta zvVoiceInstrument,x
+    sta .zvVoiceInstrument,x
     bcc .Parse_ReadPatternCmd       ;_10b _102
 Player_FetchCommand:
     lda #0
-    sta zvVoiceNoteCommand,x
-    dec zvVoiceNoteDuration,x
+    sta .zvVoiceNoteCommand,x
+    dec .zvVoiceNoteDuration,x
     beq .Parse_ReadPatternCmd
     bne .Parse_end_idle             ;_10b
 
 .ParseNoteCmdA:
     cmp #.cCMD_PauseCmd ; Fixed Note Instrument 30/31 = Hold the note/Pause
     bcs .ParseNote_Pause
-    sta zvVoiceNoteCommand,x
+    sta .zvVoiceNoteCommand,x
     and #$7                         ;_8b
 .ParseNote_Pause:
     and #.cCMD_PauseDurationMask
-    sta zvVoiceNoteDuration,x
-    inc zvVoiceNoteDuration,x
+    sta .zvVoiceNoteDuration,x
+    inc .zvVoiceNoteDuration,x
     bcc .Parse_end                  ;_8b
 .Parse_end_idle:
     cpx #21
     bcs .Parse_end
 !if (RMX_INSTRUMENT_BLOCK = 1){
-    dec zvVoiceInstrumentBlock,x
+    dec .zvVoiceInstrumentBlock,x
     bpl .Parse_end
-    inc zvVoiceInstrumentBlock,x
+    inc .zvVoiceInstrumentBlock,x
 }
-    stx zvPlayer_FreeDrumsVoice     ;_6b
+    stx .zvPlayer_FreeDrumsVoice     ;_6b
 .Parse_end:
     txa
     sbx #7
-    stx zvPlayer_NextVoiceCheck
+    stx .zvPlayer_NextVoiceCheck
     rts                             ;_6b    __149b      COMMAND PARSING
 
-
-
-
-!macro AdjustDurationInstrument{
-    !if (RMX_LONGNOTE_INSTRUMENTS = 1){
-        lda zvVoiceNoteDuration,x
-        cmp #RMX_LONGNOTE_THRESHOLD
-        bcc +
-        tya
-        adc #RMX_LONGNOTE_INSTRUMENT_OFFSET-1
-        tay
-+    
-    }        
-    !if (RMX_LONGNOTE_INSTRUMENTS = 2){
-        lda zvVoiceNoteDuration,x
-        cmp #RMX_LONGNOTE_THRESHOLD
-        bcc +
-        lda Instrument_LongNoteInstrument,y
-        tay
-+    
-    }    
-    !if (RMX_LONGNOTE_INSTRUMENTS = 3){
-        lda zvVoiceNoteDuration,x
-        cmp Instrument_LongNoteThreshold,y
-        bcc +
-        lda Instrument_LongNoteInstrument,y
-        tay
-+    
-    }
-    !if (RMX_LONGNOTE_INSTRUMENTS = 4){
--       lda zvVoiceNoteDuration,x
-        cmp Instrument_LongNoteThreshold,y
-        bcc +
-        lda Instrument_LongNoteInstrument,y
-        tay
-        bcs -
-+    
-    }    
-}
 
 
 ;;;;;;;;;;;;;;;;
@@ -461,17 +418,17 @@ RReMiX_Loop:
     ;;   11xxxxxx - Note abs, next is wave
     ;;   10xxxxxx - Note offset, no wave
     ;;   0xxxxxxx - Jmp abs
--   ldy zvVoiceWavetableIndex,x
+-   ldy .zvVoiceWavetableIndex,x
     beq ++
     lda .MUSIC_WavetableData,y
     bmi +
 .WavetableJumpCommand:          ; 0aaaaaaa
-    sta zvVoiceWavetableIndex,x
+    sta .zvVoiceWavetableIndex,x
     bpl -
 .WavetableNoteCommand:          ; 1?nnnnnn
-+   inc zvVoiceWavetableIndex,x
++   inc .zvVoiceWavetableIndex,x
     clc
-    adc zvVoiceCurrentNote,x
+    adc .zvVoiceCurrentNote,x
     cmp #%11000000
     and #$3F
     tay
@@ -481,15 +438,15 @@ RReMiX_Loop:
     sta sid_v1_freq_lo,x
     bcc ++
 .WavetableWaveCommand:          ; 11nnnnnn
-    ldy zvVoiceWavetableIndex,x
+    ldy .zvVoiceWavetableIndex,x
     lda .MUSIC_WavetableData,y
-    inc zvVoiceWavetableIndex,x
+    inc .zvVoiceWavetableIndex,x
     sta sid_v1_control,x
 ++  txa
     sbx #7
     bpl -                           ;_54b Wavetable parsing
 }
-    ldx zvPlayer_NextVoiceCheck
+    ldx .zvPlayer_NextVoiceCheck
     bmi .Player_DoHardReset9
 !if (RMX_SPEED <= 3){
     jsr Player_FetchCommand
@@ -514,14 +471,14 @@ RReMiX_Loop:
     ldx #$F0
     sax .zvBaseNoteDuration
     and #$0F
-    sta zvPlayer_CurrentBaseNote    ;12b
+    sta .zvPlayer_CurrentBaseNote    ;12b
 ++
 
 .Player_DoDrumsVoices:
     lda .zvDrumsCommand
     beq ++
-    ldx zvPlayer_FreeDrumsVoice
-    sta zvVoiceNoteCommand,x        ;8b            __83
+    ldx .zvPlayer_FreeDrumsVoice
+    sta .zvVoiceNoteCommand,x        ;8b            __83
 ++
 
 .Player_DoHardReset8:
@@ -531,11 +488,11 @@ RReMiX_Loop:
 .Player_WriteControlCmd:
     ldx #14
 !if (RMX_DRUMS_DEFAULT_VOICE = 2){
-    stx zvPlayer_FreeDrumsVoice
+    stx .zvPlayer_FreeDrumsVoice
 }
--   lda zvVoiceNoteCommand,x
+-   lda .zvVoiceNoteCommand,x
 !if (RMX_DRUMS_DEFAULT_VOICE = 0){
-    stx zvPlayer_FreeDrumsVoice
+    stx .zvPlayer_FreeDrumsVoice
 }
     beq .Player_ContinueNewNote
     
@@ -551,15 +508,49 @@ RReMiX_Loop:
 .Play_Note:
     clc
 !if (RMX_BASENOTE_PER_VOICE > 0){
-    ldy zvVoiceBaseNote,x
+    ldy .zvVoiceBaseNote,x
     adc .MUSIC_BaseNotePerVoiceTable,y
 }else{
-    adc zvVoiceBaseNote,x
+    adc .zvVoiceBaseNote,x
 }
-    ldy zvVoiceInstrument,x
-+   sta zvVoiceCurrentNote,x        ; _14b
+    ldy .zvVoiceInstrument,x
++   sta .zvVoiceCurrentNote,x        ; _14b
 
-    +AdjustDurationInstrument
+;; Adjust Duration Instrument
+!if (RMX_LONGNOTE_INSTRUMENTS = 1){
+	lda .zvVoiceNoteDuration,x
+	cmp #RMX_LONGNOTE_THRESHOLD
+	bcc +
+	tya
+	adc #RMX_LONGNOTE_INSTRUMENT_OFFSET-1
+	tay
++    
+}        
+!if (RMX_LONGNOTE_INSTRUMENTS = 2){
+	lda .zvVoiceNoteDuration,x
+	cmp #RMX_LONGNOTE_THRESHOLD
+	bcc +
+	lda .Instrument_LongNoteInstrument,y
+	tay
++    
+}    
+!if (RMX_LONGNOTE_INSTRUMENTS = 3){
+	lda .zvVoiceNoteDuration,x
+	cmp .Instrument_LongNoteThreshold,y
+	bcc +
+	lda .Instrument_LongNoteInstrument,y
+	tay
++    
+}
+!if (RMX_LONGNOTE_INSTRUMENTS = 4){
+-       lda .zvVoiceNoteDuration,x
+	cmp .Instrument_LongNoteThreshold,y
+	bcc +
+	lda .Instrument_LongNoteInstrument,y
+	tay
+	bcs -
++    
+}    
 
     lda .zvTmpHardResetCmd
 !if (RMX_USE_WAVETABLE > 0){
@@ -572,22 +563,22 @@ RReMiX_Loop:
     bne .Player_ContinueNewNote_Wave    
 }
 !if (RMX_INSTRUMENT_USE_AD = 1){
-    lda Instrument_AD,y
+    lda .Instrument_AD,y
     sta sid_v1_attack_decay,x
 }
 !if (RMX_INSTRUMENT_USE_SR = 1){
-    lda Instrument_SR,y
+    lda .Instrument_SR,y
     sta sid_v1_sustain_release,x
 }
 !if (RMX_INSTRUMENT_BLOCK = 1){
-    lda Instrument_Block,y
-    sta zvVoiceInstrumentBlock,x
+    lda .Instrument_Block,y
+    sta .zvVoiceInstrumentBlock,x
 }
-    lda Instrument_Wave,y
+    lda .Instrument_Wave,y
 !if (RMX_USE_WAVETABLE = 0){
     pha
-    lda Instrument_Note,y
-    adc zvVoiceCurrentNote,x
+    lda .Instrument_Note,y
+    adc .zvVoiceCurrentNote,x
     tay
     lda .FreqTableHi,y
     sta sid_v1_freq_hi,x
@@ -597,7 +588,7 @@ RReMiX_Loop:
 }
 .Player_ContinueNewNote_Wave:    
 !if (RMX_USE_WAVETABLE > 0){
-    sta zvVoiceWavetableIndex,x
+    sta .zvVoiceWavetableIndex,x
 }else{
     sta sid_v1_control,x
 }
@@ -609,10 +600,10 @@ RReMiX_Loop:
 
 .Player_DoHardReset9:
     ldx #28
-    stx zvPlayer_NextVoiceCheck
+    stx .zvPlayer_NextVoiceCheck
     
 !if (RMX_DRUMS_DEFAULT_VOICE = 3){
-    stx zvPlayer_FreeDrumsVoice
+    stx .zvPlayer_FreeDrumsVoice
 }
     
 !if (RMX_USE_WAVETABLE > 0){

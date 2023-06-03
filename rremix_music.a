@@ -24,7 +24,7 @@
 ;; OPTIONAL FEATURES
 ;; disable (set to 0) any unused features to save some space
 RMX_INSTRUMENT_BLOCK = 0        ; 0: disable: Any instrument may be overridden by drums the very next tick.
-                                ; 1: Block the use of the voice for drum overrides for instrument specific ticks (frames * 4) using the Instrument_Block-table.
+                                ; 1: Block the use of the voice for drum overrides for instrument specific ticks (frames * 4) using the .Instrument_Block-table.
                                 ;    COST: 13+(#instruments) bytes
 
 RMX_INSTRUMENT_USE_AD = 1       ; 0: only SR is used, AD is always $00
@@ -64,9 +64,9 @@ RMX_USE_WAVETABLE = 0           ; 0: fix waveform and note height for each note
 RMX_LONGNOTE_INSTRUMENTS = 0    ; 0: The instrument is always the specified one, regardless of note duration
                                 ; 1: RMX_LONGNOTE_THRESHOLD specifies the threshold at which RMX_LONGNOTE_INSTRUMENT_OFFSET is added to instrument
                                 ;    COST: 10 bytes
-                                ; 2: RMX_LONGNOTE_THRESHOLD specifies the threshold at which the Instrument in .Instrument_LongNoteInstrument should be used
+                                ; 2: RMX_LONGNOTE_THRESHOLD specifies the threshold at which the Instrument in ..Instrument_LongNoteInstrument should be used
                                 ;    COST: 10 bytes + #instruments
-                                ; 3: like 1, but the threshold is configured in Instrument_LongNoteThreshold
+                                ; 3: like 1, but the threshold is configured in .Instrument_LongNoteThreshold
                                 ;    COST: 11 bytes + #instruments*2
                                 ; 4: like 2, but there can be more than two instruments, as the second is also asked for another threshold
                                 ;    COST: 13 bytes + #instruments
@@ -98,36 +98,36 @@ RMX_SPEED = 4                   ; 3: one tick every 3 frames. COST: +3b
 ;                           BASS        HAR         LEAD        SNARE  <-- Demo-Song Instruments, feel free to change
 ; Attack / Decay
 !if (RMX_INSTRUMENT_USE_AD = 1){
-Instrument_AD:      !byte   $19,        $6C,        $19,        $08
+.Instrument_AD:      !byte   $19,        $6C,        $19,        $08
 }
 ; Sustain / Release
 !if (RMX_INSTRUMENT_USE_SR = 1){
-Instrument_SR:      !byte   $00,        $00,        $00,        $00
+.Instrument_SR:      !byte   $00,        $00,        $00,        $00
 }
 ;; Without wavetable: specify a Waveform and Basenote for each Instrument    
 !if (RMX_USE_WAVETABLE = 0){
-Instrument_Wave:    !byte   $21,        $11,        $41,        $81
-Instrument_Note:    !byte   ._C1,       ._C2,       ._C4,       ._F7
+.Instrument_Wave:    !byte   $21,        $11,        $41,        $81
+.Instrument_Note:    !byte   ._C1,       ._C2,       ._C4,       ._F7
 
 ;; With wavetable: specify an offset in the wavetable for each Instrument    
 }else{
-Instrument_Wave:    !byte   .wv_bass,   .wv_har,    .wv_lead,   .wv_snare
+.Instrument_Wave:    !byte   .wv_bass,   .wv_har,    .wv_lead,   .wv_snare
 }
 
 ;; When using BLOCK: specify number of ticks each instruments blocks drums from using that voice     
 !if (RMX_INSTRUMENT_BLOCK = 1){
-Instrument_Block:   !byte   1,          6,          1,          1
+.Instrument_Block:   !byte   1,          6,          1,          1
 }
 
 ;; When using LONGNOTE 2 and up: specify the Instrument thats being used for Long notes 
 !if (RMX_LONGNOTE_INSTRUMENTS > 1){
-Instrument_LongNoteInstrument:
+.Instrument_LongNoteInstrument:
                     !byte   $00,        $01,        $02,        $03
 }
 
 ;; When using LONGNOTE 3 and up: specify the amount of ticks that make a note a longnote
 !if (RMX_LONGNOTE_INSTRUMENTS > 2){
-Instrument_LongNoteThreshold:
+.Instrument_LongNoteThreshold:
                     !byte   4,          4,          4,          4
 }
 
