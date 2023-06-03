@@ -1,5 +1,5 @@
 
-!if (CFG_NOTES_ALL = 1){    
+!if (RMX_NOTES_ALL = 1){    
     ._C0  = 0
     ._Cf0 = 1
     ._D0  = 2

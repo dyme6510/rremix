@@ -9,13 +9,13 @@
 +   !word 0
 
     sei
-    jsr NanoPlayer_Init
+    jsr RReMiX_Init
 .RasterLoop:    
     lda #$FF
 -   cmp vic_line
     bne -
     inc vic_cborder
-    jsr NanoPlayer_Loop
+    jsr RReMiX_Loop
     inc vic_cborder
     
 -   lda vic_line
@@ -28,8 +28,8 @@
     jmp .RasterLoop
 
 ;; Needs 56 consecutive zeropage addresses
-NanoPlayer_Zeropage = $10
+RReMiX_Zeropage = $10
 
-NanoPlayer_Memory = $3D00
+RReMiX_Memory = $3D00
 
-!src "nanoplayer_main.a"
+!src "rremix_main.a"

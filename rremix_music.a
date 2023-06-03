@@ -7,7 +7,7 @@
 ;;
 ;; The player has 5 instead of 3 voices:
 ;;  - Voice 0-2 are the standard SID voices
-;;  - Voice 3 is meant for drums. It overrides any inactive voice (fallback: CFG_DRUMS_DEFAULT_VOICE).
+;;  - Voice 3 is meant for drums. It overrides any inactive voice (fallback: RMX_DRUMS_DEFAULT_VOICE).
 ;;    This allows better reuse of patterns.
 ;;  - Voice 4 is the BASENOTE. All notes of all voices are transposed by the active basenote.
 ;;    The BASENOTE is read at the start of each NOTE-Pattern and used until the end of the pattern.
@@ -23,65 +23,65 @@
 ;;
 ;; OPTIONAL FEATURES
 ;; disable (set to 0) any unused features to save some space
-CFG_INSTRUMENT_BLOCK = 0        ; 0: disable: Any instrument may be overridden by drums the very next tick.
+RMX_INSTRUMENT_BLOCK = 0        ; 0: disable: Any instrument may be overridden by drums the very next tick.
                                 ; 1: Block the use of the voice for drum overrides for instrument specific ticks (frames * 4) using the Instrument_Block-table.
                                 ;    COST: 13+(#instruments) bytes
 
-CFG_INSTRUMENT_USE_AD = 1       ; 0: only SR is used, AD is always $00
+RMX_INSTRUMENT_USE_AD = 1       ; 0: only SR is used, AD is always $00
                                 ; 1: Instruments use AD of hull
                                 ;    COST: 6+(#instruments) bytes
 
-CFG_INSTRUMENT_USE_SR = 0       ; 0: only AD is used, SR is always $00
+RMX_INSTRUMENT_USE_SR = 0       ; 0: only AD is used, SR is always $00
                                 ; 1: Instruments use SR of hull
                                 ;    COST: 6+(#instruments) bytes
 
-CFG_BASENOTE_PER_VOICE = 0      ; 0: BaseNote-commands directly contain the basenote
+RMX_BASENOTE_PER_VOICE = 0      ; 0: BaseNote-commands directly contain the basenote
                                 ; 1: BaseNote-commands contain an index to the basenote-per-voice table (for voice 0-2)
                                 ;    COST: 7+(#BaseNote-table-entries*3) bytes, max 55b
                                 ; 2: BaseNote-commands contain an index to the basenote-per-voice table with only 2 entries per row.
                                 ;    Entry 0 is for Voice 0 and 14, Entry 1 is for Voice 7
                                 ;    COST: 6+(#BaseNote-table-entries*2) bytes, max 38b
 
-CFG_DRUMS_DEFAULT_VOICE = -1    ; -1: Use the lowest voice index that was most recently free.
+RMX_DRUMS_DEFAULT_VOICE = -1    ; -1: Use the lowest voice index that was most recently free.
                                 ;  0: Use voice 0 when all voices are busy. COST: 2b
                                 ;  2: Use voice 2 when all voices are busy. COST: 2b
                                 ;  3: Do not override any voice when all voices are busy COST: 2b
 
-CFG_RANDOM_GROUPS = 2           ; 0: No random group support. Shame... that's a key feature!
+RMX_RANDOM_GROUPS = 2           ; 0: No random group support. Shame... that's a key feature!
                                 ; 1: Pattern-Commands to pick randomly one out of four specified patterns
                                 ;    COST: 27 bytes
                                 ; 2: Like 1, plus a command to reset the random sequence to the value at the start of the current pattern
                                 ;    COST: 47 bytes
 
-CFG_MORE_PATTERNDATA = 0        ; 0: 256b of pattern data total, 128 patterns across all voices
+RMX_MORE_PATTERNDATA = 0        ; 0: 256b of pattern data total, 128 patterns across all voices
                                 ; 1: unlimited pattern data, 128 patterns across all voices
                                 ;    COST: 32 bytes and a lot of worst-case rasterlines (ca. 8?)
 
-CFG_USE_WAVETABLE = 1           ; 0: fix waveform and note height for each note
+RMX_USE_WAVETABLE = 1           ; 0: fix waveform and note height for each note
                                 ; 1: enable complex instruments (waveform changes and arpeggios) via wavetable
                                 ;    COST: 41b + #instruments + additional wavetable data
 
-CFG_LONGNOTE_INSTRUMENTS = 0    ; 0: The instrument is always the specified one, regardless of note duration
-                                ; 1: CFG_LONGNOTE_THRESHOLD specifies the threshold at which CFG_LONGNOTE_INSTRUMENT_OFFSET is added to instrument
+RMX_LONGNOTE_INSTRUMENTS = 0    ; 0: The instrument is always the specified one, regardless of note duration
+                                ; 1: RMX_LONGNOTE_THRESHOLD specifies the threshold at which RMX_LONGNOTE_INSTRUMENT_OFFSET is added to instrument
                                 ;    COST: 10 bytes
-                                ; 2: CFG_LONGNOTE_THRESHOLD specifies the threshold at which the Instrument in .Instrument_LongNoteInstrument should be used
+                                ; 2: RMX_LONGNOTE_THRESHOLD specifies the threshold at which the Instrument in .Instrument_LongNoteInstrument should be used
                                 ;    COST: 10 bytes + #instruments
                                 ; 3: like 1, but the threshold is configured in Instrument_LongNoteThreshold
                                 ;    COST: 11 bytes + #instruments*2
                                 ; 4: like 2, but there can be more than two instruments, as the second is also asked for another threshold
                                 ;    COST: 13 bytes + #instruments
-CFG_LONGNOTE_INSTRUMENT_OFFSET = 10 ; only used with CFG_DURATION_INSTRUMENTS=1
-CFG_LONGNOTE_THRESHOLD = 4          ; only used with CFG_DURATION_INSTRUMENTS=(1 or 2)
+RMX_LONGNOTE_INSTRUMENT_OFFSET = 10 ; only used with RMX_DURATION_INSTRUMENTS=1
+RMX_LONGNOTE_THRESHOLD = 4          ; only used with RMX_DURATION_INSTRUMENTS=(1 or 2)
 
-CFG_NOTES_ALL = 0               ; 0: only allow Notes of C-major (this makes transposition a lot easier)
+RMX_NOTES_ALL = 0               ; 0: only allow Notes of C-major (this makes transposition a lot easier)
                                 ; 1: allow all notes (transposition is less likely to fit the required half-tone steps)
                                 ;   COST: 10b notes table, less relative note range for note-commands
 
-CFG_SPEED = 4                   ; 3: one tick every 3 frames. COST: +3b
+RMX_SPEED = 4                   ; 3: one tick every 3 frames. COST: +3b
                                 ; 4: one tick every 4 frames
                                 ; 6: one tick every 6 frames
 
-!src "nanoplayer_notedefinitions.a"                                
+!src "rremix_notedefinitions.a"                                
 
 .MUSIC_Instruments:
 ;;================================================================
@@ -97,15 +97,15 @@ CFG_SPEED = 4                   ; 3: one tick every 3 frames. COST: +3b
 
 ;                           BASS        HAR         LEAD        SNARE  <-- Demo-Song Instruments, feel free to change
 ; Attack / Decay
-!if (CFG_INSTRUMENT_USE_AD = 1){
+!if (RMX_INSTRUMENT_USE_AD = 1){
 Instrument_AD:      !byte   $19,        $6C,        $19,        $08
 }
 ; Sustain / Release
-!if (CFG_INSTRUMENT_USE_SR = 1){
+!if (RMX_INSTRUMENT_USE_SR = 1){
 Instrument_SR:      !byte   $00,        $00,        $00,        $00
 }
 ;; Without wavetable: specify a Waveform and Basenote for each Instrument    
-!if (CFG_USE_WAVETABLE = 0){
+!if (RMX_USE_WAVETABLE = 0){
 Instrument_Wave:    !byte   $21,        $11,        $61,        $81
 Instrument_Note:    !byte   ._C1,       ._C2,       ._C4,       ._F7
 
@@ -115,18 +115,18 @@ Instrument_Wave:    !byte   .wv_bass,   .wv_har,    .wv_lead,   .wv_snare
 }
 
 ;; When using BLOCK: specify number of ticks each instruments blocks drums from using that voice     
-!if (CFG_INSTRUMENT_BLOCK = 1){
+!if (RMX_INSTRUMENT_BLOCK = 1){
 Instrument_Block:   !byte   1,          6,          1,          1
 }
 
 ;; When using LONGNOTE 2 and up: specify the Instrument thats being used for Long notes 
-!if (CFG_LONGNOTE_INSTRUMENTS > 1){
+!if (RMX_LONGNOTE_INSTRUMENTS > 1){
 Instrument_LongNoteInstrument:
                     !byte   $00,        $01,        $02,        $03
 }
 
 ;; When using LONGNOTE 3 and up: specify the amount of ticks that make a note a longnote
-!if (CFG_LONGNOTE_INSTRUMENTS > 2){
+!if (RMX_LONGNOTE_INSTRUMENTS > 2){
 Instrument_LongNoteThreshold:
                     !byte   4,          4,          4,          4
 }
@@ -135,7 +135,7 @@ Instrument_LongNoteThreshold:
 ;; WAVETABLE : max 127b (1-127, index 0 is reserved)
 ;; -------------------------;
 ;; DO NOT CHANGE:           ;
-!if (CFG_USE_WAVETABLE > 0){;
+!if (RMX_USE_WAVETABLE > 0){;
 .MUSIC_WavetableData = *-1: ;
 .W = %11000000              ;
 .N = %10000000              ;
@@ -145,7 +145,7 @@ Instrument_LongNoteThreshold:
 ;; WAVETABLE COMMANDS:
 ;; .W+x : Note value followed by a waveform. Example: .W+_G8,$81
 ;; .N+x : Note value, does not change the active waveform. Example: .N+_G8
-;;              ATTENTION: When using CFG_NOTES_ALL, only notes up to Df5 can be specified
+;;              ATTENTION: When using RMX_NOTES_ALL, only notes up to Df5 can be specified
 ;; value 1-127: Jump to that pattern index
 ;; 0: HALT
 ;;
@@ -174,12 +174,12 @@ Instrument_LongNoteThreshold:
     !byte 6, 70, 130, 42, 1         ;; BaseNote changes 5 before all others, Drums 4 late (on '2')
 
 ;; Specify starting position for each voice
-!if (CFG_MORE_PATTERNDATA = 0){    
+!if (RMX_MORE_PATTERNDATA = 0){    
 .MUSIC_VoiceStartPos:       ;; start pattern index for each voice
     !byte .MUSIC_StartPos_BASS, .MUSIC_StartPos_HARMONY, .MUSIC_StartPos_LEAD, .MUSIC_StartPos_DRUMS, .MUSIC_StartPos_BASENOTE
 }
 ;; When using MORE_PATTERNDATA, specify the starting pattern index instead
-!if (CFG_MORE_PATTERNDATA = 1){    
+!if (RMX_MORE_PATTERNDATA = 1){    
 .MUSIC_VoiceStartPattern:       ;; start pattern index for each voice
     !byte .MUSIC_StartPattern_BASS, .MUSIC_StartPattern_HARMONY, .MUSIC_StartPattern_LEAD, .MUSIC_StartPattern_DRUMS, .MUSIC_StartPattern_BASENOTE
 }
@@ -187,7 +187,7 @@ Instrument_LongNoteThreshold:
 ; When BASENOTE_PER_VOICE is used, Basenote Commands contain a row-index to this table
 ; Each row contains a basenote for every voice from 0-2
 ; Specify only as many rows as needed (max. 16 rows)
-!if (CFG_BASENOTE_PER_VOICE = 1){
+!if (RMX_BASENOTE_PER_VOICE = 1){
 .MUSIC_BaseNotePerVoiceTable:
     ;       V0      V7      V14
     !byte ._C1,     ._C1,   ._C1    ; Use this entry with .bX+0
@@ -220,7 +220,7 @@ Instrument_LongNoteThreshold:
 ;;
 ;;  The BASENOTE-Voice interprets commands differently, the commands are in the form DURATION+NOTE
 ;;  where DURATION is .b1 until .b15 (the value is in 64*frames, so 16*ticks)
-;;  and NOTE is ._C0 to ._D2 (when using CFG_NOTES_ALL, only ._C0 to ._Df1)
+;;  and NOTE is ._C0 to ._D2 (when using RMX_NOTES_ALL, only ._C0 to ._Df1)
 .MUSIC_NotePatternData:
 
 .PN = .cCMD_FirstPatternCmd ; Notes Pattern Command
@@ -350,7 +350,7 @@ Instrument_LongNoteThreshold:
 
 !warn "#SubPattern: ",.MUSIC_cCountSubPattern, " Size:", (* - .MUSIC_SubPatternData)
 !warn "Pattern Data size: ", * - .MUSIC_PatternData
-!if (CFG_MORE_PATTERNDATA = 0){
+!if (RMX_MORE_PATTERNDATA = 0){
     !if (* - .MUSIC_PatternData > 256){
         !error("MAX 256b pattern data allowed")
     }
@@ -360,14 +360,14 @@ Instrument_LongNoteThreshold:
 }
 
 
-;; Startpattern needed for CFG_MORE_PATTERNDATA = 1
+;; Startpattern needed for RMX_MORE_PATTERNDATA = 1
 .MUSIC_StartPattern_BASENOTE = .P_BASENOTE
 .MUSIC_StartPattern_BASS = .P_BASS
 .MUSIC_StartPattern_HARMONY = .P_HARMONY
 .MUSIC_StartPattern_LEAD = .P_LEAD_START
 .MUSIC_StartPattern_DRUMS = .P_DRUMS
 
-;; Startpos needed for CFG_MORE_PATTERNDATA = 0
+;; Startpos needed for RMX_MORE_PATTERNDATA = 0
 .MUSIC_StartPos_BASENOTE = .MUSIC_Start_BASENOTE - .MUSIC_PatternData;
 .MUSIC_StartPos_BASS = .MUSIC_Start_BASS - .MUSIC_PatternData;
 .MUSIC_StartPos_HARMONY = .MUSIC_Start_HARMONY - .MUSIC_PatternData;
@@ -381,7 +381,7 @@ Instrument_LongNoteThreshold:
 ;; Each group consists of 4 pattern or group commands
 ;; One of which is used randomly
 ;;
-!if (CFG_RANDOM_GROUPS > 0){
+!if (RMX_RANDOM_GROUPS > 0){
 
 .MUSIC_GroupData:
     !byte .PN_BASENOTE+0, .PN_BASENOTE+0, .PN_BASENOTE+1, .PN_BASENOTE+2        ; G0

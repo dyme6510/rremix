@@ -1,7 +1,7 @@
 0. How To:
 ==========
-You'll need to edit the nanoplayer_music.a file and then compile the
-nanoplayer.a file with the ACME cross compiler.
+You'll need to edit the rremix_music.a file and then compile the
+rremix_player.a file with the ACME cross compiler.
 
 0.1) Please install the ACME cross compiler.
 --------------------------------------------
@@ -9,14 +9,14 @@ On Windows, you'll need to set a path to the ACME_Lib folder. You can do this
 by either setting the environment PATH variable or use the SET PATH command
 in the console prompt prior to running acme.exe on your file.
 
-0.2) Edit the nanoplayer_music.a file
+0.2) Edit the rremix_music.a file
 -------------------------------------
 There should be extensive commentary in the file that gives you an idea what
 to do. But I know that "extensive commentary" from my viewpoint will almost
 definitely mean "totally obscure" from your viewpoint, so please give me
 some feedback how to clear up things once you figured it out.
 
-0.3) Compile nanoplayer.a
+0.3) Compile rremix_player.a
 ------------------------------
 That file imports the music file and wraps everything in a small player.
 If you want to use your song in a production, you'll figure everything
