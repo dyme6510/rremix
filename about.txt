@@ -1,3 +1,7 @@
+###################################################################
+### RREMIX, the Randomizing REcursive MIcropattern player V0.01 ###
+###################################################################
+
 0. How To:
 ==========
 You'll need to edit the rremix_music.a file and then compile the
