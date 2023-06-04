@@ -1,5 +1,5 @@
 ;; #################################################
-;; Music definition file for the nanopattern-player.
+;; Music definition file for the rremix-player.
 ;; #################################################
 ;;
 ;; The patterns are very short fragments that can be combined into other patterns and thus heavily reused.
