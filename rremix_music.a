@@ -70,8 +70,8 @@ RMX_LONGNOTE_INSTRUMENTS = 0    ; 0: The instrument is always the specified one,
                                 ;    COST: 11 bytes + #instruments*2
                                 ; 4: like 2, but there can be more than two instruments, as the second is also asked for another threshold
                                 ;    COST: 13 bytes + #instruments
-RMX_LONGNOTE_INSTRUMENT_OFFSET = 10 ; only used with RMX_DURATION_INSTRUMENTS=1
-RMX_LONGNOTE_THRESHOLD = 4          ; only used with RMX_DURATION_INSTRUMENTS=(1 or 2)
+RMX_LONGNOTE_INSTRUMENT_OFFSET = 10 ; only used with RMX_LONGNOTE_INSTRUMENTS=1
+RMX_LONGNOTE_THRESHOLD = 4          ; only used with RMX_LONGNOTE_INSTRUMENTS=(1 or 2)
 
 RMX_NOTES_ALL = 0               ; 0: only allow Notes of C-major (this makes transposition a lot easier)
                                 ; 1: allow all notes (transposition is less likely to fit the required half-tone steps)

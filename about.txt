@@ -64,7 +64,7 @@ and should be avoided. In other players, usually the drums are on whichever
 voice is currently idle. When no voice is idle, the instrument of one voice is
 altered so it sounds like the freshly started note starts with the required
 drum sound. We should be able to separate the drums from the voices and do this
-in the player. So the player will featur an additional voice for the drums that
+in the player. So the player will use an additional voice for the drums that
 does not correspond with a SID-voice but gets mixed into the SID-Voices.
 
 1.2.3) Transposing
