@@ -9,13 +9,13 @@
 +   !word 0
 
     sei
-    jsr RReMiX_Init
+    jsr RMX_Init
 .RasterLoop:    
     lda #$FF
 -   cmp vic_line
     bne -
     inc vic_cborder
-    jsr RReMiX_Loop
+    jsr RMX_Loop
     inc vic_cborder
     
 -   lda vic_line
@@ -28,8 +28,8 @@
     jmp .RasterLoop
 
 ;; Needs 56 consecutive zeropage addresses
-RReMiX_Zeropage = $10
+RMX_Zeropage = $10
 
-RReMiX_Memory = $3D00
+RMX_Memory = $3D00
 
 !src "rremix_main.a"

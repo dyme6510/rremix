@@ -25,13 +25,13 @@ SIZECOUNT_MUSIC_START = *
 SIZECOUNT_PLAYER_START = *
 
 
-.pMusicFreqTable = RReMiX_Memory ; $3C00   120b frequency table
+.pMusicFreqTable = RMX_Memory ; $3C00   120b frequency table
 
 !if (RMX_MORE_PATTERNDATA = 1){
     .pPatternIndexDataLo = .pMusicFreqTable + 128 ; 256b Pattern start index table (16 bit)
     .pPatternIndexDataHi = .pMusicFreqTable + 256 ;
     
-    .pVoiceStackPtr = RReMiX_Memory + $200 ; $3D00 35 bytes
+    .pVoiceStackPtr = RMX_Memory + $200 ; $3D00 35 bytes
     .pVoiceStack_PC = .pVoiceStackPtr
     .pVoiceStack_REPCOUNT = .pVoiceStackPtr + 35
     .pVoiceStack_RNDSEED = .pVoiceStackPtr + 70   
@@ -40,7 +40,7 @@ SIZECOUNT_PLAYER_START = *
 }else{
     .pPatternIndexData = .pMusicFreqTable + 128 ; 128b Pattern start index table (8 bit)
     
-    .pVoiceStackPtr = RReMiX_Memory + $100 ; $3D00 70 bytes
+    .pVoiceStackPtr = RMX_Memory + $100 ; $3D00 70 bytes
     .pVoiceStack_PC = .pVoiceStackPtr
     .pVoiceStack_REPCOUNT = .pVoiceStackPtr + 35
     .pVoiceStack_RNDSEED = .pVoiceStackPtr + 70  
@@ -56,9 +56,9 @@ SIZECOUNT_PLAYER_START = *
 ;;  63b   ZEROPAGE - ADDRESSES        ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-.cZP0 = RReMiX_Zeropage    ; 7*5 ZP-Plätze (7 für Jede Stimme 0-4)
-.cZP1 = RReMiX_Zeropage+35 ; 7*3 ZP-Plätze (7 für Jede 'echte' Stimme 0-2)
-.cZP2 = RReMiX_Zeropage+56 ; Player variables
+.cZP0 = RMX_Zeropage    ; 7*5 ZP-Plätze (7 für Jede Stimme 0-4)
+.cZP1 = RMX_Zeropage+35 ; 7*3 ZP-Plätze (7 für Jede 'echte' Stimme 0-2)
+.cZP2 = RMX_Zeropage+56 ; Player variables
 
 .zpVoiceStackPtr = .cZP0+0
 .zvVoiceStackPtrHi = .cZP0+1  ; 7 Plätze: 6 für Pattern, 1 für Note
@@ -108,7 +108,7 @@ SIZECOUNT_PLAYER_START = *
 .FreqTablePalSrcHi: !byte $83,$8b,$9c,$af,$b9,$d0,$ea
 }
 
-RReMiX_Init:
+RMX_Init:
     ; init frequency tables
     ldy #._OCT*9-1
 --  ldx #._OCT
@@ -411,7 +411,7 @@ Player_FetchCommand:
 ;;  Player Loop
 ;;
 ;;;;;;;;;;;;;;;;
-RReMiX_Loop:
+RMX_Loop:
 !if (RMX_USE_WAVETABLE > 0){
     ldx #14
     ;; Wavetable-Commands:
