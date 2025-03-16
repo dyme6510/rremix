@@ -49,7 +49,7 @@ RMX_DRUMS_DEFAULT_VOICE = -1    ; -1: Use the lowest voice index that was most r
 
 RMX_RANDOM_GROUPS = 2           ; 0: No random group support. Shame... that's a key feature!
                                 ; 1: Pattern-Commands to pick randomly one out of four specified patterns
-                                ;    COST: 27 bytes
+                                ;    COST: 29 bytes
                                 ; 2: Like 1, plus a command to reset the random sequence to the value at the start of the current pattern
                                 ;    COST: 47 bytes
 

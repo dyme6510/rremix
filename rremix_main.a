@@ -180,7 +180,7 @@ RMX_Init:
 
 -   lda #>.pVoiceStackPtr
     sta .zvVoiceStackPtrHi,x
-!if (RMX_RANDOM_GROUPS = 2){    
+!if (RMX_RANDOM_GROUPS > 0){    
     ;; RND darf niemals 0 sein
     sta .zvVoiceRnd,x
 }
